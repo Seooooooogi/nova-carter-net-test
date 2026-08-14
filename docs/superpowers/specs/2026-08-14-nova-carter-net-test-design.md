@@ -6,8 +6,7 @@
 
 MSI 노트북 5대를 2.5G 전용 스위치로 묶은 폐쇄망에서, Isaac Sim nova_carter 씬이
 발행하는 **RGB(JPEG 압축) 와 3D LiDAR 토픽이 4대의 원격 구독자에게 원활히
-전달되는지** 측정한다. 동시에 ROS 2 트래픽이 천장 AP(무선)로 새지 않고 유선으로만
-흐르는지 검증한다.
+전달되는지** 측정한다. ROS 2 트래픽은 FastDDS 설정으로 유선에만 묶는다.
 
 무선 AP 는 ROS 전송로가 아니라 **인터넷 경로**다 (apt 패키지 설치, Isaac Sim 원격
 에셋 다운로드). 유선망은 gateway 를 비워 둔 폐쇄망이므로 인터넷이 없다.
@@ -56,7 +55,6 @@ raw 토픽은 원격 구독자가 붙지 않으므로 DDS 가 전송하지 않�
 | 수신 Hz | `ros2 topic hz` 평균 rate | PC1 로컬 baseline 대비 90% 이상 |
 | 대역폭 | `ros2 topic bw` MB/s | 기록만 — 스위치 포화 판단 근거 |
 | nav2 주행 | `ros2 run commander nav_to_pose` | 목표 pose 도달 성공 |
-| 유선 격리 | 무선 NIC 에서 `tcpdump 'udp portrange 7400-7600'` | 10초간 0 패킷 |
 
 손실률은 `1 - (원격 Hz / PC1 로컬 Hz)` 로 계산한다. PC1 에서도 같은 `probe.sh` 를
 돌려 baseline 을 만들기 때문에 별도 기준값을 하드코딩하지 않는다.
@@ -129,6 +127,8 @@ CSV 스키마: `timestamp,host,topic,hz,mb_per_s`
 ## 7. 범위 밖
 
 - 무선(AP)을 ROS 전송로로 쓰는 비교 측정 — 유선 전용 구성만 검증한다
+- 무선 NIC 의 DDS 트래픽 `tcpdump` 검증 — FastDDS `interfaceWhiteList` 가 인터페이스를
+  이미 유선으로 묶으므로 별도 측정 단계로 두지 않는다
 - end-to-end 지연 측정 — 시계 동기화 인프라가 없다
 - SSH 오케스트레이션 — 각 노트북에서 수동 실행한다
 - 다중 로봇(multi-carter) 시나리오
