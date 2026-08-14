@@ -1,0 +1,14 @@
+nova-carter-net-test
+
+이 저장소는 NVIDIA CORPORATION 이 Apache License 2.0 으로 배포한 Isaac Sim ROS 2
+샘플 자료를 포함한다.
+
+- src/carter_navigation/, src/commander/
+  출처: NVIDIA Isaac Sim ROS 2 workspace 샘플
+  라이선스: Apache License 2.0 (각 소스 파일 헤더 참조)
+
+- isaac/scenes/carter_warehouse_navigation.usd
+  출처: NVIDIA Isaac Sim 5.1 ROS 2 샘플 씬
+  이 USD 는 씬 구성 파일이며, 로봇 본체(Nova_Carter_ROS.usd)와 창고 에셋은
+  omniverse-content-production.s3-us-west-2.amazonaws.com 에서 실행 시점에
+  원격 참조한다. 에셋 본체는 이 저장소에 포함되지 않는다.

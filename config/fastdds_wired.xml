@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<dds xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles">
+  <profiles>
+    <transport_descriptors>
+      <transport_descriptor>
+        <transport_id>wired_udp</transport_id>
+        <type>UDPv4</type>
+        <!-- 이 목록에 없는 인터페이스(무선 NIC)로는 DDS 소켓을 열지 않는다 -->
+        <interfaceWhiteList>
+          <address>10.10.0.1</address>
+          <address>10.10.0.2</address>
+          <address>10.10.0.3</address>
+          <address>10.10.0.4</address>
+          <address>10.10.0.5</address>
+        </interfaceWhiteList>
+      </transport_descriptor>
+    </transport_descriptors>
+    <participant profile_name="wired_only" is_default_profile="true">
+      <rtps>
+        <userTransports>
+          <transport_id>wired_udp</transport_id>
+        </userTransports>
+        <useBuiltinTransports>false</useBuiltinTransports>
+      </rtps>
+    </participant>
+  </profiles>
+</dds>
