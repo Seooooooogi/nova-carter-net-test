@@ -11,10 +11,7 @@ list-op 의 "deleted" 항목으로 끊어 두었다. 그 결과 on_playback_tick
 여러 번 실행해도 결과가 같다.
 
 usage:
-  R=$HOME/dev_ws/isaac_sim/isaacsim/_build/linux-x86_64/release
-  EXT=$R/extscache/$(ls $R/extscache | grep -m1 omni.usd.libs)
-  PYTHONPATH=$EXT LD_LIBRARY_PATH=$EXT/bin:$R/kit:$R/kit/kernel/plugins \
-    $R/kit/python/bin/python3 tools/enable_front_camera.py isaac/scenes/carter_warehouse_navigation.usd
+  ./tools/isaac_python.sh tools/enable_front_camera.py isaac/scenes/carter_warehouse_navigation.usd
 """
 
 import sys

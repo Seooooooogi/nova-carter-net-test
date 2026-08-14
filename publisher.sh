@@ -6,10 +6,11 @@
 set -euo pipefail
 
 HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-ISAAC_ROOT=${ISAAC_ROOT:-$HOME/dev_ws/isaac_sim/isaacsim/_build/linux-x86_64/release}
 LIDAR_TOPIC=${LIDAR_TOPIC:-/front_3d_lidar/lidar_points}
 
-[[ -x $ISAAC_ROOT/python.sh ]] || { echo "no python.sh at $ISAAC_ROOT — set ISAAC_ROOT" >&2; exit 1; }
+# 설치 형태마다 경로가 달라서 탐색에 맡긴다. ISAAC_ROOT 로 덮어쓸 수 있다.
+ISAAC_ROOT=$("$HERE/tools/isaac_python.sh" --root)
+echo "== Isaac Sim: $ISAAC_ROOT ($(cat "$ISAAC_ROOT/VERSION" 2>/dev/null || echo 'version unknown'))"
 
 DISTRO=${ROS_DISTRO:-}
 if [[ -z $DISTRO || ! -d /opt/ros/$DISTRO ]]; then

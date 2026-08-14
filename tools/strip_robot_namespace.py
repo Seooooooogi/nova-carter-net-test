@@ -8,10 +8,7 @@
 여러 번 실행해도 결과가 같다.
 
 usage:
-  R=$HOME/dev_ws/isaac_sim/isaacsim/_build/linux-x86_64/release
-  EXT=$R/extscache/omni.usd.libs-1.0.1+69cbf6ad.lx64.r.cp311
-  PYTHONPATH=$EXT LD_LIBRARY_PATH=$EXT/bin:$R/kit:$R/kit/kernel/plugins \
-    $R/kit/python/bin/python3 tools/strip_robot_namespace.py isaac/scenes/*.usd
+  ./tools/isaac_python.sh tools/strip_robot_namespace.py isaac/scenes/carter_warehouse_navigation.usd
 """
 
 import sys

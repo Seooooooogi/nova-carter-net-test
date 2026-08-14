@@ -29,7 +29,7 @@ HEADLESS=1 ./publisher.sh    # 모니터 없이(SSH 등) 돌릴 때
 
 ```bash
 # 터미널 1 — Isaac Sim
-$HOME/dev_ws/isaac_sim/isaacsim/_build/linux-x86_64/release/python.sh isaac/nova_carter_ros.py
+$(./tools/isaac_python.sh --root)/python.sh isaac/nova_carter_ros.py
 ```
 
 ```bash
@@ -58,12 +58,15 @@ ros2 topic list | grep -E 'cmd_vel|lidar_points|image_raw|tf'
 `/carter1/...` 로 나오거나 `image_raw` 가 없으면 씬을 고친다 (저장소의 USD 는 이미 적용된 상태).
 
 ```bash
-R=$HOME/dev_ws/isaac_sim/isaacsim/_build/linux-x86_64/release
-EXT=$R/extscache/$(ls $R/extscache | grep -m1 omni.usd.libs)
-export PYTHONPATH=$EXT LD_LIBRARY_PATH=$EXT/bin:$R/kit:$R/kit/kernel/plugins
 S=isaac/scenes/carter_warehouse_navigation.usd
-$R/kit/python/bin/python3 tools/strip_robot_namespace.py "$S"
-$R/kit/python/bin/python3 tools/enable_front_camera.py "$S"
+./tools/isaac_python.sh tools/strip_robot_namespace.py "$S"
+./tools/isaac_python.sh tools/enable_front_camera.py "$S"
+```
+
+Isaac Sim 설치 위치는 자동으로 찾는다. 못 찾으면 `ISAAC_ROOT` 를 지정한다.
+
+```bash
+ISAAC_ROOT=/opt/isaacsim ./tools/isaac_python.sh --root
 ```
 
 ## 2. PC2~5 — 영상 확인

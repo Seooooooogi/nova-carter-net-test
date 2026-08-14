@@ -208,10 +208,18 @@ Ubuntu 24.04 + Jazzy 컨테이너로 실측한 결과:
   않는다 — RGB 측정 자체가 불가능해진다. `tools/enable_front_camera.py` 가 deleted 항목만
   비워 payload 의 원래 연결을 되살린다. 나머지 hawk 3개는 렌더 프로덕트가 `enabled=False`
   라 애초에 영상을 내지 않는다.
-- Isaac Sim 설치 경로는 `ISAAC_ROOT` 환경변수로 덮어쓸 수 있다. 기본값은
-  `$HOME/dev_ws/isaac_sim/isaacsim/_build/linux-x86_64/release`.
-- FastDDS `interfaceWhiteList` 는 IP 주소만 받는다 (Humble 의 FastDDS 2.6 기준).
-  인터페이스 이름 지정은 불가하므로 고정 IP 가 전제 조건이다.
+- **Isaac Sim 설치 위치는 PC 마다 다르다.** 소스 빌드(`.../_build/linux-x86_64/release`),
+  바이너리(`/opt/isaacsim`), Omniverse Launcher(`~/.local/share/ov/pkg/isaac-sim-*`) 로
+  레이아웃이 갈리고, `extscache` 의 `omni.usd.libs-<버전>+<해시>` 문자열도 설치마다 다르다
+  (실제로 이 개발 PC 에는 5.1.0-rc.19 소스 빌드와 5.0.0-rc.45 바이너리가 공존한다).
+  `tools/isaac_python.sh` 가 후보 경로를 탐색해 `python.sh` 가 있는 곳을 고르고, extscache
+  이름도 glob 으로 찾는다. `ISAAC_ROOT` 로 덮어쓸 수 있으며, 명시했는데 틀리면 조용히 다른
+  설치본으로 넘어가지 않고 실패한다 — 버전이 다른 설치에 붙는 사고를 막기 위해서다.
+  `publisher.sh` 는 기동 시 선택된 경로와 `VERSION` 을 출력한다.
+- 설치 위치와 무관한 것: ROS 배포판 선택(`ROS_DISTRO` 환경변수), DDS 설정, 토픽 이름,
+  에셋 캐시(`~/.cache/ov`, 사용자 단위).
+- FastDDS `interfaceWhiteList` 는 IP 주소만 받는다. 인터페이스 이름 지정은 불가하므로
+  고정 IP 가 전제 조건이다. Jazzy 의 Fast DDS 2.14.6 에서도 동일하게 동작함을 확인했다.
 
 ## 7. 범위 밖
 
