@@ -7,7 +7,7 @@
 set -euo pipefail
 
 DURATION=${DURATION:-20}
-TOPICS=${TOPICS:-"/net_test/rgb/compressed /front_3d_lidar/lidar_points /scan"}
+TOPICS=${TOPICS:-"/front_stereo_camera/left/image_raw/compressed /front_3d_lidar/lidar_points /scan"}
 
 parse_hz() { grep -oE 'average rate: [0-9.]+' | tail -1 | awk '{print $3}'; }
 

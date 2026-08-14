@@ -34,7 +34,8 @@ FastDDS `interfaceWhiteList` 에 `10.10.0.1` ~ `10.10.0.5` 만 등록한다. 이
 ```
 Isaac Sim (PC1)
   ├─ /front_stereo_camera/left/image_raw   (sensor_msgs/Image, raw)
-  │     └─ image_transport republish ──▶ /net_test/rgb/compressed   ← 네트워크로 나가는 유일한 영상
+  │     └─ image_transport republish
+  │           ──▶ /front_stereo_camera/left/image_raw/compressed   ← 네트워크로 나가는 유일한 영상
   └─ /front_3d_lidar/lidar_points          (sensor_msgs/PointCloud2)
         └─ pointcloud_to_laserscan ──▶ /scan ──▶ nav2 (PC1 로컬)
 ```
@@ -45,8 +46,18 @@ Isaac Sim 의 ROS 2 bridge 는 raw `sensor_msgs/Image` 만 발행한다. JPEG �
 raw 토픽은 원격 구독자가 붙지 않으므로 DDS 가 전송하지 않는다 (DDS 는 매칭된
 구독자가 있을 때만 데이터를 보낸다). 따라서 네트워크에는 JPEG 만 흐른다.
 
-카메라 토픽 이름은 씬 버전에 따라 달라질 수 있어 `publisher.sh` 가 런타임에
-`ros2 topic list` 로 자동 탐지한다. `RGB_TOPIC` 환경변수로 덮어쓸 수 있다.
+압축본 토픽은 별도 prefix 를 붙이지 않고 raw 토픽 뒤에 `/compressed` 를 붙인다.
+이것이 image_transport 의 표준 규약이라, 구독자가 base 토픽 + `compressed` transport
+조합으로 그대로 받을 수 있다.
+
+카메라 토픽 이름의 근거는 씬 payload(`Nova_Carter_ROS.usd`)의 OmniGraph 다:
+`front_hawk/camera_namespace.inputs:value = '/front_stereo_camera'` 가
+`left_camera_publish_image.inputs:nodeNamespace` 에 연결돼 있고, 같은 노드의
+`inputs:topicName = 'left/image_raw'` 다 → `/front_stereo_camera/left/image_raw`.
+카메라 그래프는 로봇 레벨 `node_namespace` 를 쓰지 않아 `carter1` 문제와 무관하다.
+
+씬 버전이 바뀔 경우를 대비해 `publisher.sh` 는 런타임에 `ros2 topic list` 로도
+탐지하며, `RGB_TOPIC` 환경변수로 덮어쓸 수 있다.
 
 ## 4. 측정 항목과 합격 기준
 

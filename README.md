@@ -35,7 +35,8 @@ $HOME/dev_ws/isaac_sim/isaacsim/_build/linux-x86_64/release/python.sh isaac/nova
 # 터미널 2 — JPEG republish
 source install/setup.bash
 ros2 run image_transport republish raw compressed \
-  --ros-args -r in:=/front_stereo_camera/left/image_raw -r out:=/net_test/rgb
+  --ros-args -r in:=/front_stereo_camera/left/image_raw \
+             -r out:=/front_stereo_camera/left/image_raw
 ```
 
 ```bash
@@ -72,7 +73,7 @@ TOPICS="/scan" ./probe.sh
 ## 3. PC2~5 — 영상 확인
 
 ```bash
-ros2 run rqt_image_view rqt_image_view /net_test/rgb/compressed
+ros2 run rqt_image_view rqt_image_view /front_stereo_camera/left/image_raw/compressed
 ```
 
 ## 4. PC1 — nav2 주행 확인
@@ -94,7 +95,7 @@ ros2 run commander nav_to_pose
 
 - 첫 실행은 인터넷 필요 — USD 씬이 로봇/창고 에셋을 NVIDIA S3 에서 원격 참조한다. 무선 AP 로 받고, 이후 `~/.cache/ov` 에 캐시된다.
 - `./setup.sh` 는 유선 gateway 를 비운다. 기본 경로가 무선으로 유지되어야 인터넷이 살아 있다.
-- PC2~5 에서 raw 카메라 토픽(`*/image_raw`)을 구독하지 말 것 — DDS 는 구독자가 붙는 순간부터 전송한다. 1080p30 raw 는 약 180 MB/s 라 2.5G 스위치를 혼자 포화시킨다. `/net_test/rgb/compressed` 만 구독한다.
+- PC2~5 에서 raw 토픽 `/front_stereo_camera/left/image_raw` 를 구독하지 말 것 — DDS 는 구독자가 붙는 순간부터 전송한다. 1080p30 raw 는 약 180 MB/s 라 2.5G 스위치를 혼자 포화시킨다. rqt_image_view 드롭다운에서 반드시 `/compressed` 가 붙은 쪽을 고른다.
 - 배포된 씬은 로봇 ROS 그래프에 `carter1` 네임스페이스가 박혀 있어 `/carter1/cmd_vel`, `/carter1/tf` 로 나간다. nav2 params 는 네임스페이스 없는 토픽을 쓰므로 그대로 두면 목표를 줘도 로봇이 안 움직인다. 이 저장소의 USD 는 이미 벗겨 둔 상태다 (`tools/strip_robot_namespace.py`).
 - 카메라 토픽 이름이 다르면 `RGB_TOPIC=/your/topic ./publisher.sh`.
 - Isaac Sim 경로가 다르면 `ISAAC_ROOT=/path/to/release ./publisher.sh`.
