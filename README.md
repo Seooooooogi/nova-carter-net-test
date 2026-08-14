@@ -94,6 +94,7 @@ column -s, -t results/*.csv
 
 - 첫 실행은 인터넷 필요 — USD 씬이 로봇/창고 에셋을 NVIDIA S3 에서 원격 참조한다. 무선 AP 로 받고, 이후 `~/.cache/ov` 에 캐시된다.
 - `./setup.sh` 는 유선 gateway 를 비운다. 기본 경로가 무선으로 유지되어야 인터넷이 살아 있다.
+- PC2~5 에서 raw 카메라 토픽(`*/image_raw`)을 구독하지 말 것 — DDS 는 구독자가 붙는 순간부터 전송한다. 1080p30 raw 는 약 180 MB/s 라 2.5G 스위치를 혼자 포화시킨다. `/net_test/rgb/compressed` 만 구독한다.
 - 카메라 토픽 이름이 다르면 `RGB_TOPIC=/your/topic ./publisher.sh`.
 - Isaac Sim 경로가 다르면 `ISAAC_ROOT=/path/to/release ./publisher.sh`.
 
