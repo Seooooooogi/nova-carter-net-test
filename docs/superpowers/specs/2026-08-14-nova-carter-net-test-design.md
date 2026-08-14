@@ -111,6 +111,16 @@ CSV 스키마: `timestamp,host,topic,hz,mb_per_s`
   (`Nova_Carter_ROS.usd`)와 창고 에셋을 NVIDIA S3 에서 원격 참조한다. 유선 폐쇄망만
   연결된 상태에서는 씬이 열리지 않는다. 첫 실행 후에는 `~/.cache/ov` 에 캐시된다.
 - **USD 씬은 NVIDIA 저작물**이다. repo 에 포함하되 NOTICE 에 출처를 명시한다.
+- **씬의 로봇 ROS 그래프에 `carter1` 네임스페이스가 박혀 있었다.** 로컬 USD 레이어가
+  `differential_drive` / `ros_lidars` / `transform_tree_odometry` / `chassis_imu` 네 그래프의
+  `node_namespace.inputs:value` 를 `'carter1'` 로 override 한다 (세 씬 파일 모두 동일,
+  multi 씬은 `carter1` + `carter2`). 그 결과 실제 토픽이 `/carter1/cmd_vel`,
+  `/carter1/front_3d_lidar/lidar_points`, `/carter1/chassis/odom`, `/carter1/tf` 가 되는데,
+  `carter_navigation_params.yaml` 은 `/chassis/odom` · `scan` 을, launch 의
+  `pointcloud_to_laserscan` 은 `/front_3d_lidar/lidar_points` 를 네임스페이스 없이 쓴다.
+  이 불일치를 두면 nav2 가 목표를 받아도 `/cmd_vel` 구독자가 없어 로봇이 움직이지 않는다.
+  `tools/strip_robot_namespace.py` 로 네 값을 빈 문자열로 만들어 단일 로봇 구성에 맞춘다.
+  카메라 그래프(`front_hawk`)는 override 대상이 아니라 토픽 이름이 그대로다.
 - Isaac Sim 설치 경로는 `ISAAC_ROOT` 환경변수로 덮어쓸 수 있다. 기본값은
   `$HOME/dev_ws/isaac_sim/isaacsim/_build/linux-x86_64/release`.
 - FastDDS `interfaceWhiteList` 는 IP 주소만 받는다 (Humble 의 FastDDS 2.6 기준).

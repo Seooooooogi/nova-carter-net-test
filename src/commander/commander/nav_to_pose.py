@@ -88,7 +88,10 @@ def main():
     nav = BasicNavigator()
     
     # 1. 출발점 설정
-    init_pose = create_pose(nav, -6.0, -1.0, 0.007)
+    # yaw 는 도(degree) 단위다. 씬의 스폰 자세가 180도이고 amcl 의 set_initial_pose 도
+    # yaw 3.14159 rad(=180도)이므로 여기도 180.0 이어야 한다. 0.007 이면 heading 이
+    # 180도 틀어진 채로 localization 이 시작된다.
+    init_pose = create_pose(nav, -6.0, -1.0, 180.0)
     nav.setInitialPose(init_pose)
     nav.waitUntilNav2Active()
     

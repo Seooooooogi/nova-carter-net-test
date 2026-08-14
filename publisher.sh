@@ -20,8 +20,17 @@ trap 'kill 0' EXIT
 echo "== Isaac Sim"
 "$ISAAC_ROOT/python.sh" "$HERE/isaac/nova_carter_ros.py" &
 
-echo "== waiting for $LIDAR_TOPIC"
-until ros2 topic list 2>/dev/null | grep -qx "$LIDAR_TOPIC"; do sleep 3; done
+echo "== waiting for $LIDAR_TOPIC (max ${LIDAR_WAIT:-300}s)"
+deadline=$((SECONDS + ${LIDAR_WAIT:-300}))
+until ros2 topic list 2>/dev/null | grep -qx "$LIDAR_TOPIC"; do
+  if (( SECONDS > deadline )); then
+    echo "timeout — '$LIDAR_TOPIC' 이 없다. 현재 토픽:" >&2
+    ros2 topic list >&2
+    echo "'/carter1/...' 처럼 네임스페이스가 붙어 있으면 tools/strip_robot_namespace.py 를 돌려라" >&2
+    exit 1
+  fi
+  sleep 3
+done
 
 # 카메라 토픽 이름은 씬 버전에 따라 다르다 — 없으면 RGB_TOPIC 으로 직접 지정
 RGB_TOPIC=${RGB_TOPIC:-$(ros2 topic list | grep -m1 'image_raw$' || true)}
