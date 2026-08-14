@@ -73,6 +73,23 @@ baseline 을 만들기 때문에 별도 기준값을 하드코딩하지 않는�
 측정은 수동으로 한다. 저장소는 기동까지만 책임지고 계측 스크립트는 두지 않는다.
 `ros2 topic hz` / `ros2 topic bw` 를 각 노드에서 직접 실행한다.
 
+측정 시 주의: `setsid` 나 `timeout -s INT` 로 감싸면 `ros2 topic hz` 가 출력을 한 줄도
+남기지 않는다. 평범한 `timeout <초> ros2 topic hz <토픽>` 을 쓴다.
+
+### PC1 로컬 실측 (2026-08-15, RTX 4090, 헤드리스)
+
+| 토픽 | Hz | 대역폭 |
+|------|-----|--------|
+| `/front_stereo_camera/left/image_raw` | 20.6 | 164 MB/s |
+| `/front_3d_lidar/lidar_points` | 41.0 | 3.57 MB/s |
+| `/chassis/odom` | 43.4 | — |
+| `/tf` | 158.1 | — |
+| `/clock` | 43.4 | — |
+
+raw 영상 164 MB/s ≈ 1.3 Gbps 다. 구독자 한 대만 붙어도 2.5G 스위치의 절반을
+먹으므로, 원격 노드는 반드시 `/compressed` 만 구독해야 한다. JPEG 압축 후 대역폭은
+이 PC 에 `compressed_image_transport` 가 없어 아직 측정하지 못했다 (unknown).
+
 end-to-end 지연은 측정하지 않는다. 노트북 간 시계 동기화(chrony/PTP)가 없으면
 `header.stamp` 기준 지연값이 무의미하기 때문이다.
 
@@ -111,6 +128,10 @@ Isaac Sim → 토픽 대기 → nav2 launch → republish 를 순서대로 띄�
 씬의 로봇 ROS 그래프 네임스페이스(`carter1`)를 빈 문자열로 만든다. 멱등하다.
 자세한 배경은 6절 참조.
 
+### tools/enable_front_camera.py
+
+`front_hawk` 그래프의 끊긴 입력 연결을 되살린다. 멱등하다. 자세한 배경은 6절 참조.
+
 ## 6. 제약과 전제
 
 - **첫 실행 시 인터넷 필요.** `carter_warehouse_navigation.usd` 는 로봇 본체
@@ -127,6 +148,15 @@ Isaac Sim → 토픽 대기 → nav2 launch → republish 를 순서대로 띄�
   이 불일치를 두면 nav2 가 목표를 받아도 `/cmd_vel` 구독자가 없어 로봇이 움직이지 않는다.
   `tools/strip_robot_namespace.py` 로 네 값을 빈 문자열로 만들어 단일 로봇 구성에 맞춘다.
   카메라 그래프(`front_hawk`)는 override 대상이 아니라 토픽 이름이 그대로다.
+  2026-08-15 실측으로 확인했다 — 패치 전 `/carter1/cmd_vel`, 패치 후 `/cmd_vel`.
+- **씬이 `front_hawk` 그래프 연결을 끊어 두었다.** 로컬 레이어가 USD list-op 의 deleted
+  항목으로 `isaac_run_one_simualtion_frame.inputs:execIn`, `isaac_read_imu_node.inputs:execIn`,
+  `left_camera_publish_image.inputs:execIn`·`renderProductPath`, `ros2_camera_info_helper.*`
+  등 23개 연결을 삭제한다. 그 결과 `on_playback_tick` 은 뛰지만 하위 노드가 한 번도
+  평가되지 않아 `/front_stereo_camera/left/image_raw` 도 `/front_stereo_imu/imu` 도 나오지
+  않는다 — RGB 측정 자체가 불가능해진다. `tools/enable_front_camera.py` 가 deleted 항목만
+  비워 payload 의 원래 연결을 되살린다. 나머지 hawk 3개는 렌더 프로덕트가 `enabled=False`
+  라 애초에 영상을 내지 않는다.
 - Isaac Sim 설치 경로는 `ISAAC_ROOT` 환경변수로 덮어쓸 수 있다. 기본값은
   `$HOME/dev_ws/isaac_sim/isaacsim/_build/linux-x86_64/release`.
 - FastDDS `interfaceWhiteList` 는 IP 주소만 받는다 (Humble 의 FastDDS 2.6 기준).

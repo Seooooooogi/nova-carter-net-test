@@ -48,17 +48,20 @@ ros2 launch carter_navigation carter_navigation.launch.py
 ## 1-b. PC1 — 토픽 이름 확인 (첫 실행 시 1회)
 
 ```bash
-ros2 topic list | grep -E 'cmd_vel|lidar_points|odom|tf'
-ros2 topic info /cmd_vel --verbose
+ros2 topic list | grep -E 'cmd_vel|lidar_points|image_raw|tf'
 ```
 
-`/carter1/...` 로 나오면 씬 네임스페이스를 벗겨야 nav2 가 로봇을 움직인다.
+기대값: `/cmd_vel` `/front_3d_lidar/lidar_points` `/front_stereo_camera/left/image_raw` `/tf`
+
+`/carter1/...` 로 나오거나 `image_raw` 가 없으면 씬을 고친다 (저장소의 USD 는 이미 적용된 상태).
 
 ```bash
 R=$HOME/dev_ws/isaac_sim/isaacsim/_build/linux-x86_64/release
 EXT=$R/extscache/$(ls $R/extscache | grep -m1 omni.usd.libs)
-PYTHONPATH=$EXT LD_LIBRARY_PATH=$EXT/bin:$R/kit:$R/kit/kernel/plugins \
-  $R/kit/python/bin/python3 tools/strip_robot_namespace.py isaac/scenes/carter_warehouse_navigation.usd
+export PYTHONPATH=$EXT LD_LIBRARY_PATH=$EXT/bin:$R/kit:$R/kit/kernel/plugins
+S=isaac/scenes/carter_warehouse_navigation.usd
+$R/kit/python/bin/python3 tools/strip_robot_namespace.py "$S"
+$R/kit/python/bin/python3 tools/enable_front_camera.py "$S"
 ```
 
 ## 2. PC2~5 — 영상 확인
