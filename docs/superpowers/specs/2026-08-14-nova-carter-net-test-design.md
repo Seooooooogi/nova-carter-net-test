@@ -176,6 +176,12 @@ Ubuntu 24.04 + Jazzy 컨테이너로 실측한 결과:
 - 컨테이너 검증 시 주의: `--net=host` 만으로는 Fast DDS 공유메모리 전송이 IPC 네임스페이스를
   넘지 못해 디스커버리만 되고 데이터가 안 온다. `--ipc=host` 를 주거나 UDP 전용 프로파일을
   쓴다. 저장소의 `fastdds_wired.xml` 은 `useBuiltinTransports=false` + UDPv4 라 해당 없음.
+- **화면이 없으면 헤드리스로 돌린다.** 모니터가 붙지 않은 X 디스플레이에서 GUI 로 띄우면
+  Isaac 로그에 `getMonitorPrimary: primary monitor is invalid!` 가 뜨고 발행률이 2 Hz 수준으로
+  떨어진다 (헤드리스 40 Hz 대비). `xrandr --listmonitors` 가 `Monitors: 0` 이면 이 상태다.
+  `HEADLESS=1 ./publisher.sh` 로 우회한다. 모니터가 정상 연결된 노트북에서는 해당 없다.
+- 구독자 쪽 GUI 는 Jazzy 에서 검증했다 — `republish` 로 만든
+  `/front_stereo_camera/left/image_raw/compressed` 를 `rqt_image_view` 로 구독해 기동 확인.
 
 ## 6. 제약과 전제
 

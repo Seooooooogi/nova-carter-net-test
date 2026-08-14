@@ -22,6 +22,7 @@ colcon build --symlink-install
 
 ```bash
 ./publisher.sh
+HEADLESS=1 ./publisher.sh    # 모니터 없이(SSH 등) 돌릴 때
 ```
 
 ## 1-a. PC1 — 개별 실행 (터미널 3개)
