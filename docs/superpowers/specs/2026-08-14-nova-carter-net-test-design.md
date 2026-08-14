@@ -16,7 +16,7 @@ MSI 노트북 5대를 2.5G 전용 스위치로 묶은 폐쇄망에서, Isaac Sim
 | 노드 | 유선 IP | 역할 |
 |------|---------|------|
 | PC1 | 10.10.0.1 | Isaac Sim (nova_carter warehouse) + nav2 + JPEG republish + 로컬 baseline 측정 |
-| PC2~5 | 10.10.0.2 ~ 10.10.0.5 | 원격 구독자 — `probe.sh` 로 Hz/대역폭 측정, `rqt_image_view` 로 영상 육안 확인 |
+| PC2~5 | 10.10.0.2 ~ 10.10.0.5 | 원격 구독자 — `ros2 topic hz`/`bw` 로 수동 측정, `rqt_image_view` 로 영상 육안 확인 |
 
 공통 환경:
 
@@ -67,8 +67,11 @@ raw 토픽은 원격 구독자가 붙지 않으므로 DDS 가 전송하지 않�
 | 대역폭 | `ros2 topic bw` MB/s | 기록만 — 스위치 포화 판단 근거 |
 | nav2 주행 | `ros2 run commander nav_to_pose` | 목표 pose 도달 성공 |
 
-손실률은 `1 - (원격 Hz / PC1 로컬 Hz)` 로 계산한다. PC1 에서도 같은 `probe.sh` 를
-돌려 baseline 을 만들기 때문에 별도 기준값을 하드코딩하지 않는다.
+손실률은 `1 - (원격 Hz / PC1 로컬 Hz)` 로 계산한다. PC1 에서도 같은 명령을 돌려
+baseline 을 만들기 때문에 별도 기준값을 하드코딩하지 않는다.
+
+측정은 수동으로 한다. 저장소는 기동까지만 책임지고 계측 스크립트는 두지 않는다.
+`ros2 topic hz` / `ros2 topic bw` 를 각 노드에서 직접 실행한다.
 
 end-to-end 지연은 측정하지 않는다. 노트북 간 시계 동기화(chrony/PTP)가 없으면
 `header.stamp` 기준 지연값이 무의미하기 때문이다.
@@ -79,8 +82,8 @@ end-to-end 지연은 측정하지 않는다. 노트북 간 시계 동기화(chro
 nova-carter-net-test/
 ├── setup.sh                    # 노드 1대 셋업 (인자: 노드 번호 1~5)
 ├── publisher.sh                # PC1 전체 실행 (Isaac Sim + nav2 + republish)
-├── probe.sh                    # 측정 → results/<host>.csv
 ├── config/fastdds_wired.xml    # interfaceWhiteList 10.10.0.1~5
+├── tools/strip_robot_namespace.py
 ├── isaac/nova_carter_ros.py    # 씬 로드 + 자동 Play
 ├── isaac/scenes/carter_warehouse_navigation.usd
 └── src/{carter_navigation,commander}/
@@ -103,16 +106,10 @@ Isaac Sim → 토픽 대기 → nav2 launch → republish 를 순서대로 띄�
 프로세스 그룹을 정리한다. README 에 같은 내용을 터미널 3개로 나눠 실행하는
 개별 명령어도 함께 적는다.
 
-### probe.sh
+### tools/strip_robot_namespace.py
 
-대상 토픽마다 `ros2 topic hz` / `ros2 topic bw` 를 정해진 시간 동안 돌린 뒤 마지막
-출력 줄을 파싱해 CSV 한 줄로 append 한다. 대역폭 단위(B/s, KB/s, MB/s)는 MB/s 로
-정규화한다.
-
-파싱 로직은 `--selftest` 로 검증한다. 샘플 출력 문자열을 파서에 넣어 기대값과
-비교하며, 실패 시 exit code 1 을 낸다.
-
-CSV 스키마: `timestamp,host,topic,hz,mb_per_s`
+씬의 로봇 ROS 그래프 네임스페이스(`carter1`)를 빈 문자열로 만든다. 멱등하다.
+자세한 배경은 6절 참조.
 
 ## 6. 제약과 전제
 
@@ -142,4 +139,5 @@ CSV 스키마: `timestamp,host,topic,hz,mb_per_s`
   이미 유선으로 묶으므로 별도 측정 단계로 두지 않는다
 - end-to-end 지연 측정 — 시계 동기화 인프라가 없다
 - SSH 오케스트레이션 — 각 노트북에서 수동 실행한다
+- 계측 스크립트와 결과 취합 — 측정은 사용자가 직접 한다
 - 다중 로봇(multi-carter) 시나리오

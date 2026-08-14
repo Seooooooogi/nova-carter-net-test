@@ -1,6 +1,5 @@
 build/
 install/
 log/
-results/*.csv
 __pycache__/
 *.pyc

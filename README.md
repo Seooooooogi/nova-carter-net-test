@@ -61,22 +61,13 @@ PYTHONPATH=$EXT LD_LIBRARY_PATH=$EXT/bin:$R/kit:$R/kit/kernel/plugins \
   $R/kit/python/bin/python3 tools/strip_robot_namespace.py isaac/scenes/carter_warehouse_navigation.usd
 ```
 
-## 2. PC1~5 — 측정
-
-```bash
-./probe.sh
-DURATION=60 ./probe.sh
-TOPICS="/scan" ./probe.sh
-./probe.sh --selftest
-```
-
-## 3. PC2~5 — 영상 확인
+## 2. PC2~5 — 영상 확인
 
 ```bash
 ros2 run rqt_image_view rqt_image_view /front_stereo_camera/left/image_raw/compressed
 ```
 
-## 4. PC1 — nav2 주행 확인
+## 3. PC1 — nav2 주행 확인
 
 ```bash
 source install/setup.bash
