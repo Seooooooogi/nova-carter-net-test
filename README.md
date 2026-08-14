@@ -74,21 +74,4 @@ source install/setup.bash
 ros2 run commander nav_to_pose
 ```
 
-## 합격 기준
-
-| 항목 | 기준 |
-|------|------|
-| 수신 Hz | PC1 로컬 baseline 대비 90% 이상 |
-| 대역폭 | 기록만 (스위치 포화 판단) |
-| nav2 주행 | 목표 pose 도달 성공 |
-
-## 주의
-
-- 첫 실행은 인터넷 필요 — USD 씬이 로봇/창고 에셋을 NVIDIA S3 에서 원격 참조한다. 무선 AP 로 받고, 이후 `~/.cache/ov` 에 캐시된다.
-- `./setup.sh` 는 유선 gateway 를 비운다. 기본 경로가 무선으로 유지되어야 인터넷이 살아 있다.
-- PC2~5 에서 raw 토픽 `/front_stereo_camera/left/image_raw` 를 구독하지 말 것 — DDS 는 구독자가 붙는 순간부터 전송한다. 1080p30 raw 는 약 180 MB/s 라 2.5G 스위치를 혼자 포화시킨다. rqt_image_view 드롭다운에서 반드시 `/compressed` 가 붙은 쪽을 고른다.
-- 배포된 씬은 로봇 ROS 그래프에 `carter1` 네임스페이스가 박혀 있어 `/carter1/cmd_vel`, `/carter1/tf` 로 나간다. nav2 params 는 네임스페이스 없는 토픽을 쓰므로 그대로 두면 목표를 줘도 로봇이 안 움직인다. 이 저장소의 USD 는 이미 벗겨 둔 상태다 (`tools/strip_robot_namespace.py`).
-- 카메라 토픽 이름이 다르면 `RGB_TOPIC=/your/topic ./publisher.sh`.
-- Isaac Sim 경로가 다르면 `ISAAC_ROOT=/path/to/release ./publisher.sh`.
-
 설계 문서: [docs/superpowers/specs/2026-08-14-nova-carter-net-test-design.md](docs/superpowers/specs/2026-08-14-nova-carter-net-test-design.md)
