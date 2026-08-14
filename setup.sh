@@ -9,11 +9,20 @@ N=${1:-}
 HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 DOMAIN=${ROS_DOMAIN_ID:-50}
 
+# 배포판은 설치된 것을 찾아 쓴다 (검증 PC 는 Ubuntu 24.04 + Jazzy)
+DISTRO=${ROS_DISTRO:-}
+if [[ -z $DISTRO || ! -d /opt/ros/$DISTRO ]]; then
+  for d in jazzy humble; do [[ -d /opt/ros/$d ]] && { DISTRO=$d; break; }; done
+fi
+[[ -n $DISTRO ]] || { echo "no ROS 2 under /opt/ros — set ROS_DISTRO" >&2; exit 1; }
+echo "== ROS 2 distro: $DISTRO"
+
 # 1) JPEG 압축 플러그인 — 인터넷(무선 AP) 필요
-if ! dpkg -s ros-humble-compressed-image-transport >/dev/null 2>&1; then
-  echo "== installing ros-humble-compressed-image-transport (needs internet via Wi-Fi)"
+PKG=ros-$DISTRO-compressed-image-transport
+if ! dpkg -s "$PKG" >/dev/null 2>&1; then
+  echo "== installing $PKG (needs internet via Wi-Fi)"
   sudo apt-get update
-  sudo apt-get install -y ros-humble-compressed-image-transport
+  sudo apt-get install -y "$PKG"
 fi
 
 # 2) 유선 고정 IP. gateway 를 비워야 기본 경로가 무선으로 남아 인터넷이 살아 있다.
@@ -33,12 +42,14 @@ if ! grep -q '# nova-carter-net-test' "$HOME/.bashrc"; then
   cat >> "$HOME/.bashrc" <<EOF
 
 # nova-carter-net-test
+source /opt/ros/$DISTRO/setup.bash
 export ROS_DOMAIN_ID=$DOMAIN
 export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
 export FASTRTPS_DEFAULT_PROFILES_FILE=\$HOME/.ros/fastdds_wired.xml
 EOF
 fi
 
+source "/opt/ros/$DISTRO/setup.bash"
 export ROS_DOMAIN_ID=$DOMAIN
 export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
 export FASTRTPS_DEFAULT_PROFILES_FILE=$HOME/.ros/fastdds_wired.xml

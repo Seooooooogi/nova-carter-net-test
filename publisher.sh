@@ -11,7 +11,12 @@ LIDAR_TOPIC=${LIDAR_TOPIC:-/front_3d_lidar/lidar_points}
 
 [[ -x $ISAAC_ROOT/python.sh ]] || { echo "no python.sh at $ISAAC_ROOT — set ISAAC_ROOT" >&2; exit 1; }
 
-source /opt/ros/humble/setup.bash
+DISTRO=${ROS_DISTRO:-}
+if [[ -z $DISTRO || ! -d /opt/ros/$DISTRO ]]; then
+  for d in jazzy humble; do [[ -d /opt/ros/$d ]] && { DISTRO=$d; break; }; done
+fi
+[[ -n $DISTRO ]] || { echo "no ROS 2 under /opt/ros — set ROS_DISTRO" >&2; exit 1; }
+source "/opt/ros/$DISTRO/setup.bash"
 [[ -f $HERE/install/setup.bash ]] || { echo "run 'colcon build' first" >&2; exit 1; }
 source "$HERE/install/setup.bash"
 
@@ -37,8 +42,18 @@ RGB_TOPIC=${RGB_TOPIC:-$(ros2 topic list | grep -m1 'image_raw$' || true)}
 [[ -n $RGB_TOPIC ]] || { echo "no *image_raw topic found — set RGB_TOPIC" >&2; exit 1; }
 echo "== rgb: $RGB_TOPIC -> $RGB_TOPIC/compressed"
 
-ros2 run image_transport republish raw compressed \
-  --ros-args -r in:="$RGB_TOPIC" -r out:="$RGB_TOPIC" &
+# republish 인자 형식이 배포판마다 다르다. Jazzy 의 image_transport 5.x 는
+# in_transport/out_transport 를 위치인자로 안 받고 파라미터로 받으며,
+# 출력 토픽은 -r out:= 이 안 먹어서 최종 이름인 out/compressed 를 리맵해야 한다.
+if [[ $DISTRO == humble ]]; then
+  ros2 run image_transport republish raw compressed \
+    --ros-args -r in:="$RGB_TOPIC" -r out:="$RGB_TOPIC" &
+else
+  ros2 run image_transport republish \
+    --ros-args -p in_transport:=raw -p out_transport:=compressed \
+    -r in:="$RGB_TOPIC" \
+    -r out/compressed:="$RGB_TOPIC/compressed" &
+fi
 
 echo "== nav2"
 ros2 launch carter_navigation carter_navigation.launch.py &

@@ -32,11 +32,12 @@ $HOME/dev_ws/isaac_sim/isaacsim/_build/linux-x86_64/release/python.sh isaac/nova
 ```
 
 ```bash
-# 터미널 2 — JPEG republish
+# 터미널 2 — JPEG republish (Jazzy)
 source install/setup.bash
-ros2 run image_transport republish raw compressed \
-  --ros-args -r in:=/front_stereo_camera/left/image_raw \
-             -r out:=/front_stereo_camera/left/image_raw
+ros2 run image_transport republish --ros-args \
+  -p in_transport:=raw -p out_transport:=compressed \
+  -r in:=/front_stereo_camera/left/image_raw \
+  -r out/compressed:=/front_stereo_camera/left/image_raw/compressed
 ```
 
 ```bash

@@ -86,9 +86,21 @@ baseline 을 만들기 때문에 별도 기준값을 하드코딩하지 않는�
 | `/tf` | 158.1 | — |
 | `/clock` | 43.4 | — |
 
-raw 영상 164 MB/s ≈ 1.3 Gbps 다. 구독자 한 대만 붙어도 2.5G 스위치의 절반을
-먹으므로, 원격 노드는 반드시 `/compressed` 만 구독해야 한다. JPEG 압축 후 대역폭은
-이 PC 에 `compressed_image_transport` 가 없어 아직 측정하지 못했다 (unknown).
+### Jazzy 실측 (2026-08-15, Ubuntu 24.04 컨테이너 ← 호스트 Isaac Sim 5.1)
+
+Isaac Sim 을 `ROS_DISTRO=jazzy` + 내장 `exts/isaacsim.ros2.bridge/jazzy/lib` 로 띄워
+노트북 조합(Isaac Sim 5.1 + Jazzy)을 재현하고, Ubuntu 24.04 + Jazzy 컨테이너에서 측정했다.
+
+| 토픽 | Hz | 대역폭 |
+|------|-----|--------|
+| `/front_stereo_camera/left/image_raw` (raw) | 35.7 | **251.06 MB/s** (≈2.0 Gbps) |
+| `.../image_raw/compressed` (JPEG) | 35.6 | **20.19 MB/s** (≈161 Mbps), 프레임 0.56 MB |
+| `/front_3d_lidar/lidar_points` | 40.1 | 3.6 MB/s |
+| `/clock`, `/chassis/odom` | 40.2 | — |
+
+JPEG 는 raw 대비 **약 12.5배** 작다. 구독자 4대 기준 JPEG 80 MB/s + LiDAR 14 MB/s ≈
+755 Mbps 로 2.5G 스위치에 여유가 있다. raw 였다면 4대에 8 Gbps 라 불가능하다.
+그래서 원격 노드는 반드시 `/compressed` 만 구독해야 한다.
 
 end-to-end 지연은 측정하지 않는다. 노트북 간 시계 동기화(chrony/PTP)가 없으면
 `header.stamp` 기준 지연값이 무의미하기 때문이다.
@@ -131,6 +143,39 @@ Isaac Sim → 토픽 대기 → nav2 launch → republish 를 순서대로 띄�
 ### tools/enable_front_camera.py
 
 `front_hawk` 그래프의 끊긴 입력 연결을 되살린다. 멱등하다. 자세한 배경은 6절 참조.
+
+## 5-1. ROS 2 Jazzy 관련 확인 사항
+
+검증 PC 5대는 Ubuntu 24.04 + ROS 2 Jazzy + Isaac Sim 5.1 이다. 2026-08-15 에
+Ubuntu 24.04 + Jazzy 컨테이너로 실측한 결과:
+
+- **Isaac Sim 의 ROS 백엔드 선택** — `setup_ros_env.sh` 가 `ROS_DISTRO` 가 비어 있을
+  때만 내장 라이브러리 경로를 `LD_LIBRARY_PATH` 에 붙인다. 즉 ROS 를 소싱하면 시스템
+  ROS 를 쓴다. `python.sh` 는 `setup_ros_env.sh` 를 소싱하지 않는다 (`isaac-sim.sh` 만
+  한다). `publisher.sh` 가 ROS 를 먼저 소싱하는 지금 순서가 맞다.
+- **Isaac Sim 5.1 ↔ Jazzy 통신 가능** — Isaac 을 내장 jazzy 백엔드로 띄우고 Jazzy 쪽에서
+  40 Hz 로 수신 확인.
+- **`FASTRTPS_DEFAULT_PROFILES_FILE` 이 맞다** — 같은 XML 을 `FASTDDS_DEFAULT_PROFILES_FILE`
+  로 주면 무시된다 (토픽 발견 수가 안 변함). `interfaceWhiteList` 문법도 Fast DDS 2.14.6
+  에서 그대로 동작한다 (프로파일 적용 시 발견 토픽 17 → 5).
+- **`republish` 인자 형식이 다르다** — Jazzy 의 image_transport 5.1.8 은 위치인자
+  `raw compressed` 중 `out_transport` 를 받지 않고, `-r out:=` 리맵도 무시한다.
+  `-p in_transport:=raw -p out_transport:=compressed` 와 최종 이름 리맵
+  `-r out/compressed:=<토픽>/compressed` 를 써야 한다. `publisher.sh` 가 배포판으로 분기한다.
+- **패키지명** — `ros-jazzy-compressed-image-transport` (4.0.7), `ros-jazzy-nav2-bringup`
+  (1.3.12), `ros-jazzy-pointcloud-to-laserscan` (2.0.2) 모두 존재.
+- **Isaac 의 Python 은 3.11 고정** — Ubuntu 24.04 의 시스템 Jazzy 는 Python 3.12 라 Isaac 이
+  시스템 rclpy 를 못 쓴다. 소싱해도 rclpy 는 내장 jazzy 판(3.11)으로 폴백한다. C 라이브러리는
+  소싱된 시스템 Jazzy 를 쓴다. 배포판만 일치하면 정상 조합이다.
+  주의: `ROS_DISTRO` 와 `LD_LIBRARY_PATH` 의 배포판이 어긋나면(예: `ROS_DISTRO=jazzy` +
+  `/opt/ros/humble/lib`) `undefined symbol` 로 bridge 확장이 스스로 꺼진다.
+- **nav2 파라미터** — Humble 판 `carter_navigation_params.yaml` 은 Jazzy 에서 못 쓴다
+  (`bt_navigator` 가 `plugin_lib_names` 나열 → `navigators` + `nav2_bt_navigator::` 플러그인
+  구조로 바뀌고 `docking_server` · `collision_monitor` 가 추가됨). NVIDIA 공식
+  `IsaacSim-ros_workspaces/jazzy_ws` 판으로 교체했다.
+- 컨테이너 검증 시 주의: `--net=host` 만으로는 Fast DDS 공유메모리 전송이 IPC 네임스페이스를
+  넘지 못해 디스커버리만 되고 데이터가 안 온다. `--ipc=host` 를 주거나 UDP 전용 프로파일을
+  쓴다. 저장소의 `fastdds_wired.xml` 은 `useBuiltinTransports=false` + UDPv4 라 해당 없음.
 
 ## 6. 제약과 전제
 
