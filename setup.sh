@@ -49,7 +49,12 @@ export FASTRTPS_DEFAULT_PROFILES_FILE=\$HOME/.ros/fastdds_wired.xml
 EOF
 fi
 
+# ROS 의 setup.bash 는 AMENT_TRACE_SETUP_FILES 등을 기본값 없이 참조해서
+# set -u 아래서는 "unbound variable" 로 죽는다. 소싱 구간만 nounset 을 푼다.
+set +u
 source "/opt/ros/$DISTRO/setup.bash"
+set -u
+
 export ROS_DOMAIN_ID=$DOMAIN
 export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
 export FASTRTPS_DEFAULT_PROFILES_FILE=$HOME/.ros/fastdds_wired.xml

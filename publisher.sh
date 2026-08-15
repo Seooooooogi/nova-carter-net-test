@@ -17,9 +17,14 @@ if [[ -z $DISTRO || ! -d /opt/ros/$DISTRO ]]; then
   for d in jazzy humble; do [[ -d /opt/ros/$d ]] && { DISTRO=$d; break; }; done
 fi
 [[ -n $DISTRO ]] || { echo "no ROS 2 under /opt/ros — set ROS_DISTRO" >&2; exit 1; }
-source "/opt/ros/$DISTRO/setup.bash"
 [[ -f $HERE/install/setup.bash ]] || { echo "run 'colcon build' first" >&2; exit 1; }
+
+# ROS 의 setup.bash 는 AMENT_TRACE_SETUP_FILES 등을 기본값 없이 참조해서
+# set -u 아래서는 "unbound variable" 로 죽는다. 소싱 구간만 nounset 을 푼다.
+set +u
+source "/opt/ros/$DISTRO/setup.bash"
 source "$HERE/install/setup.bash"
+set -u
 
 trap 'kill 0' EXIT
 
